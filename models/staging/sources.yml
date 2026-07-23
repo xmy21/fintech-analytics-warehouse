@@ -1,0 +1,55 @@
+version: 2
+
+sources:
+  - name: fintech_raw
+    database: analytics-eng-portfolio
+    schema: fintech_raw
+    tables:
+      - name: users
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+
+      - name: accounts
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: user_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('fintech_raw', 'users')
+                  field: id
+
+      - name: cards
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: account_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('fintech_raw', 'accounts')
+                  field: id
+
+      - name: transactions
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: account_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('fintech_raw', 'accounts')
+                  field: id
+          - name: category
+            tests:
+              - not_null
