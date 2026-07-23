@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: dim_accounts
+    columns:
+      - name: account_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_users
+    columns:
+      - name: user_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_cards
+    columns:
+      - name: card_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_transactions
+    columns:
+      - name: transaction_id
+        tests:
+          - unique
+          - not_null
