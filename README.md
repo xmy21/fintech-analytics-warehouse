@@ -56,6 +56,10 @@ Along the way, hit and diagnosed a real BigQuery gotcha: the dataset's default t
 
 Live dashboard built in Data Studio on top of `fct_transactions`: [https://datastudio.google.com/reporting/eea8bd79-0da1-4fbf-a3ac-7a331944f43a]
 
+## Documentation
+
+Live dbt docs site (model catalog + lineage graph): https://xmy21.github.io/fintech-analytics-warehouse/
+
 - Time series: transaction volume over time (note: volume artificially skews toward recent dates due to how synthetic transaction timestamps were generated — see limitations below)
 - Bar chart: spending by category
 
