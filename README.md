@@ -21,6 +21,7 @@ BI layer (Data Studio)
 ## Data
 
 Synthetic data for a neobank, generated with Python (`faker`, `numpy`, `pandas`):
+
 - `users` — 20,000 customers
 - `accounts` — ~24,000 accounts (personal/joint/business/teen)
 - `cards` — ~36,000 debit/credit cards
@@ -47,7 +48,7 @@ Tests applied at both the source level (`sources.yml`) and the model level (stag
 
 `fct_transactions` is partitioned by `transaction_date` and clustered by `account_id`. Measured impact: a query filtering to a recent date range went from scanning **12.22 MB to 1.42 MB** (88.4% reduction) after partitioning, since BigQuery skips non-matching partitions entirely instead of scanning the full 800k-row table.
 
-Along the way, hit and diagnosed a real BigQuery gotcha: the dataset's default table expiration (60 days) was being applied *per partition* (based on each partition's own date, not the table's creation date), silently deleting ~87% of historical data on every build. Fixed by enabling billing (required to disable sandbox mode's forced 60-day expiration) and clearing the dataset's default expiration.
+Along the way, hit and diagnosed a real BigQuery gotcha: the dataset's default table expiration (60 days) was being applied _per partition_ (based on each partition's own date, not the table's creation date), silently deleting ~87% of historical data on every build. Fixed by enabling billing (required to disable sandbox mode's forced 60-day expiration) and clearing the dataset's default expiration.
 
 `fct_transactions` also uses **incremental materialization** (`merge` strategy, keyed on `transaction_id`) instead of a full rebuild on every run — after the initial full build, subsequent runs only process rows newer than what's already in the table via dbt's `is_incremental()` macro.
 
