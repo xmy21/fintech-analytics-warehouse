@@ -1,5 +1,3 @@
-Partitioning fct_transactions by transaction_date reduced bytes scanned for a recent-date-range query from 12.22 MB to 1.42 MB (88.4% reduction), since BigQuery skips non-matching partitions entirely rather than scanning the full 800k-row table.
-
 # Fintech Analytics Warehouse
 
 A portfolio project simulating an analytics engineering workflow for a neobank: synthetic transaction data generated in Python, loaded into BigQuery, and modeled into a tested, optimized star schema using dbt.
@@ -18,7 +16,7 @@ dbt staging models (1:1 cleanup, type casting, dedup)
 ↓
 dbt mart models (star schema: fact + dimensions)
 ↓
-BI layer (Looker Studio) [in progress]
+BI layer (Data Studio)
 
 ## Data
 
@@ -53,12 +51,20 @@ Along the way, hit and diagnosed a real BigQuery gotcha: the dataset's default t
 
 `fct_transactions` also uses **incremental materialization** (`merge` strategy, keyed on `transaction_id`) instead of a full rebuild on every run — after the initial full build, subsequent runs only process rows newer than what's already in the table via dbt's `is_incremental()` macro.
 
+## BI Dashboard
+
+Live dashboard built in Data Studio on top of `fct_transactions`: [https://datastudio.google.com/reporting/eea8bd79-0da1-4fbf-a3ac-7a331944f43a]
+
+- Time series: transaction volume over time (note: volume artificially skews toward recent dates due to how synthetic transaction timestamps were generated — see limitations below)
+- Bar chart: spending by category
+
 ## What I'd do with more time
 
-- Optimize the incremental filter to use a partition-based lookback window on the source side, rather than a `max()` subquery against the target — the current approach still rescans full source history on every incremental run even when 0 rows ultimately merge.
-- Add a Looker Studio (or Looker) BI layer on top of the marts.
+- Optimize the incremental filter to use a partition-based lookback window on the source side, rather than a `max()` subquery against the target.
+- The current approach still rescans full source history on every incremental run even when 0 rows ultimately merge.
 - Add SCD Type 2 handling on `dim_accounts` to track historical changes (e.g. account type, status changes over time) rather than only reflecting current state.
+- generate transactions via a constant-rate process per account rather than uniform-to-today, to avoid an artificial recency skew
 
 ## Stack
 
-Python (data generation) → BigQuery (warehouse) → dbt-core + dbt-bigquery (transformation, testing) → Looker Studio (BI, in progress)
+Python (data generation) → BigQuery (warehouse) → dbt-core + dbt-bigquery (transformation, testing) → Data Studio (BI)
