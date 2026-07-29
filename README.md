@@ -54,21 +54,26 @@ Along the way, hit and diagnosed a real BigQuery gotcha: the dataset's default t
 
 ## BI Dashboard
 
-Live dashboard built in Data Studio on top of `fct_transactions`: [https://datastudio.google.com/reporting/eea8bd79-0da1-4fbf-a3ac-7a331944f43a]
+Live dashboard built in Data Studio on top of `fct_transactions`: https://datastudio.google.com/reporting/eea8bd79-0da1-4fbf-a3ac-7a331944f43a
+
+- Time series: transaction volume over time (note: volume artificially skews toward recent dates due to how synthetic transaction timestamps were generated — see "What I'd do with more time" below)
+- Bar chart: spending by category
 
 ## Documentation
 
 Live dbt docs site (model catalog + lineage graph): https://xmy21.github.io/fintech-analytics-warehouse/
 
-- Time series: transaction volume over time (note: volume artificially skews toward recent dates due to how synthetic transaction timestamps were generated — see limitations below)
-- Bar chart: spending by category
+## Historical tracking (SCD Type 2)
+
+`accounts_snapshot` uses dbt's `check` strategy to track changes to `account_type`, `currency`, and `status` over time, rather than only reflecting current state. Verified by manually updating a batch of accounts and confirming the snapshot correctly closed out the old row (`dbt_valid_to` populated) and inserted a new current row (`dbt_valid_to` null).
+
 
 ## What I'd do with more time
 
-- Optimize the incremental filter to use a partition-based lookback window on the source side, rather than a `max()` subquery against the target.
-- The current approach still rescans full source history on every incremental run even when 0 rows ultimately merge.
-- Add SCD Type 2 handling on `dim_accounts` to track historical changes (e.g. account type, status changes over time) rather than only reflecting current state.
-- generate transactions via a constant-rate process per account rather than uniform-to-today, to avoid an artificial recency skew
+- Optimize the incremental filter to use a partition-based lookback window on the source side, rather than a `max()` subquery against the target — the current approach still rescans full source history on every incremental run even when 0 rows ultimately merge.
+- Generate transactions via a constant-rate process per account rather than uniform-to-today, to avoid the artificial recency skew visible in the BI dashboard's time series chart.
+- Add SCD Type 2 handling on other slowly-changing dimensions beyond `dim_accounts` if the model expands.
+- Add CI (GitHub Actions running `dbt build` on every push) — held off on this specifically to avoid creating and storing a long-lived service account key for a demo project. In a real production setup, I'd use Workload Identity Federation instead, which lets GitHub Actions authenticate to GCP without a static key sitting in secrets at all.
 
 ## Stack
 
